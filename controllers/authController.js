@@ -203,8 +203,8 @@ exports.sendForgotPasswordCode = async (req,res) => {
 
         if(info.accepted[0] === existingUser.email) {
             const hashedCodeValue = hmacProcess(codeValue, process.env.HMAC_VERIFICATION_CODE_SECRET);
-            existingUser.forgotPasswodCode = hashedCodeValue;
-            existingUser.forgotPasswodCodeValidation = Date.now();
+            existingUser.forgotPasswordCode = hashedCodeValue;
+            existingUser.forgotPasswordCodeValidation = Date.now();
             await existingUser.save();
             return res.status(200).json({ success:true , message:  'Code sent'});
         }
@@ -218,15 +218,13 @@ exports.sendForgotPasswordCode = async (req,res) => {
 exports.verifyForgotPasswordCode = async(req,res) => {
     const{email , providedCode , newPassword} = req.body;
     try {
-        const{error,value} = acceptFPCodeSchema.validate({email,providedCode,newPassword});
+        const{error,value} = acceptFPCodeSchema.validate({email , providedCode , newPassword});
         if(error) {
             return res.status(401).json({success: false, message:error.details[0].message})
         }
 
         const codeValue = providedCode.toString();
-        const existingUser = await User.findOne({email}).select(
-            '+forgotPasswordCode +forgotPasswordCodeValidation'
-        );
+        const existingUser = await User.findOne({email}).select('+forgotPasswordCode +forgotPasswordCodeValidation');
         
         if(!existingUser) {
             return res.status(401).json({success: false, message:"User does not exists"})
